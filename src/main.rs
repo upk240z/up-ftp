@@ -47,7 +47,7 @@ async fn main() {
     };
 
     let files = args.split_off(opts.index());
-    let mut uploader = Uploader::new(&settings, remote_base_dir.as_str()).await;
-    uploader.files(&files).await;
+    let mut uploader = Uploader::new(&settings).await;
+    uploader.files(&files, remote_base_dir.as_str()).await;
     uploader.quit().await;
 }

@@ -17,7 +17,6 @@ pub struct Uploader {
     stream: FtpStream,
     local_dir_count: usize,
     remote_dir: PathBuf,
-    remote_base_dir: PathBuf,
 }
 
 impl Uploader {
@@ -25,7 +24,7 @@ impl Uploader {
         p.replace(MAIN_SEPARATOR, "/")
     }
 
-    pub async fn new(settings: &Settings, remote_base_dir: &str) -> Self {
+    pub async fn new(settings: &Settings) -> Self {
         let mut stream = FtpStream::connect(
             format!("{}:{}", settings.host, settings.port)
         ).await.unwrap();
@@ -33,14 +32,10 @@ impl Uploader {
             settings.user.as_str(), settings.password.as_str()
         ).await.unwrap();
 
-        let mut remote_base = PathBuf::new();
-        remote_base.push(remote_base_dir);
-
         Self {
             stream: stream,
             local_dir_count: 0,
             remote_dir: PathBuf::new(),
-            remote_base_dir: remote_base,
         }
     }
 
@@ -80,9 +75,9 @@ impl Uploader {
         self.visit(path).await;
     }
 
-    pub async fn files(&mut self, files: &Vec<String>) {
+    pub async fn files(&mut self, files: &Vec<String>, remote_base_dir: &str) {
         for file in files {
-            let mut remote_path = self.remote_base_dir.clone();
+            let mut remote_path = Path::new(remote_base_dir).to_path_buf();
             remote_path.push(file);
             let remote_str = remote_path.to_str().unwrap();
 
