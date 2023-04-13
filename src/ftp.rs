@@ -1,6 +1,6 @@
 use std::fs;
 use std::path::{MAIN_SEPARATOR, Path, PathBuf};
-use async_ftp::FtpStream;
+use async_ftp::{FtpError, FtpStream};
 use async_recursion::async_recursion;
 use tokio::fs::File;
 use serde::{Serialize, Deserialize};
@@ -24,18 +24,29 @@ impl Uploader {
         p.replace(MAIN_SEPARATOR, "/")
     }
 
-    pub async fn new(settings: &Settings) -> Self {
-        let mut stream = FtpStream::connect(
+    pub async fn new(settings: &Settings) -> Result<Self, FtpError> {
+        let result = FtpStream::connect(
             format!("{}:{}", settings.host, settings.port)
-        ).await.unwrap();
-        let _ = stream.login(
-            settings.user.as_str(), settings.password.as_str()
-        ).await.unwrap();
+        ).await;
 
-        Self {
-            stream: stream,
-            local_dir_count: 0,
-            remote_dir: PathBuf::new(),
+        let mut stream = match result {
+            Ok(stream) => stream,
+            Err(err) => return Err(err),
+        };
+
+        let result = stream.login(
+            settings.user.as_str(), settings.password.as_str()
+        ).await;
+
+        match result {
+            Ok(_) => {
+                Ok(Self {
+                    stream: stream,
+                    local_dir_count: 0,
+                    remote_dir: PathBuf::new(),
+                })
+            },
+            Err(err) => return Err(err),
         }
     }
 
