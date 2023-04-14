@@ -25,29 +25,19 @@ impl Uploader {
     }
 
     pub async fn new(settings: &Settings) -> Result<Self, FtpError> {
-        let result = FtpStream::connect(
+        let mut stream = FtpStream::connect(
             format!("{}:{}", settings.host, settings.port)
-        ).await;
+        ).await?;
 
-        let mut stream = match result {
-            Ok(stream) => stream,
-            Err(err) => return Err(err),
-        };
-
-        let result = stream.login(
+        let _ = stream.login(
             settings.user.as_str(), settings.password.as_str()
-        ).await;
+        ).await?;
 
-        match result {
-            Ok(_) => {
-                Ok(Self {
-                    stream: stream,
-                    local_dir_count: 0,
-                    remote_dir: PathBuf::new(),
-                })
-            },
-            Err(err) => return Err(err),
-        }
+        Ok(Self {
+            stream: stream,
+            local_dir_count: 0,
+            remote_dir: PathBuf::new(),
+        })
     }
 
     pub async fn quit(&mut self) {
