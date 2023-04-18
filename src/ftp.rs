@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::{MAIN_SEPARATOR, Path, PathBuf};
 use async_ftp::{FtpError, FtpStream};
+use async_ftp::types::FileType;
 use async_recursion::async_recursion;
 use tokio::fs::File;
 use serde::{Serialize, Deserialize};
@@ -32,6 +33,8 @@ impl Uploader {
         let _ = stream.login(
             settings.user.as_str(), settings.password.as_str()
         ).await?;
+
+        stream.transfer_type(FileType::Binary).await?;
 
         Ok(Self {
             stream: stream,
